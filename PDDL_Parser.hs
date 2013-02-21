@@ -14,16 +14,29 @@ import Filesystem.Path.CurrentOS
 import Debug.Trace
 
 data Domain = Domain { dName :: Text, dActions :: [Action] } deriving Show
-data Problem = Problem { pName :: Text, pDomain :: Text, pInitState :: [Predicate Obj], pGoal :: [Predicate Obj]} deriving Show
+data Problem = Problem { pName :: Text, pDomain :: Text, pInitState :: Facts, pGoal :: [Fact]} deriving Show
 
-data Action = Action { aName :: Text, aPreconditions :: [Predicate Pat], aEffects :: [Predicate Pat] } deriving Show
+data Action = Action { aName :: Text, aPreconditions :: [Pattern], aEffects :: [Pattern] } deriving Show
 
-newtype Pat = Pat Text deriving Show
-newtype Obj = Obj Text deriving Show
+type Fact = Predicate Obj
+type Pattern = Predicate Pat
 
-newtype Mixed = MPat Pat | MObj Obj deriving Show
+type Facts = Set Fact
 
-data Predicate p = PosPred {predName :: Text, predArgs :: [p]} | NegPred {predName :: Text, predArgs :: [p]} deriving Show
+newtype Pat = Pat Text deriving (Show, Eq, Ord)
+newtype Obj = Obj Text deriving (Show, Eq, Ord)
+
+data Mixed = MPat Pat | MObj Obj deriving Show
+
+isObj (MObj _) = True
+isObj (MPat _) = False
+
+toObj (MObj x) = x
+
+data Predicate p = PosPred {predName :: Text, predArgs :: [p]} | NegPred {predName :: Text, predArgs :: [p]} deriving (Show, Eq, Ord)
+
+negatePred (PosPred t a) = NegPred t a
+negatePred (NegPred t a) = PosPred t a
 
 parse_pddl parser fname = do
   let f = decode fname
@@ -43,7 +56,7 @@ sexpToProblem sexp = do
   name <- findTuple "problem" sexp
   domain <- findTuple ":domain" sexp
   init <- (parse_predicate_list Obj . List . L.tail) <$> findSubExp ":init" sexp
-  return $ Problem name domain init []
+  return $ Problem name domain (fromList init) []
 
 parse_action sexp = let
   pairs = sexpToPairs sexp
