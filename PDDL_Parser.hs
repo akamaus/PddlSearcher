@@ -9,11 +9,8 @@ import Data.Maybe
 
 import Data.AttoLisp
 import Data.Attoparsec as A
-import Filesystem.Path.CurrentOS
 
 import qualified Text.Show as TS
-
-import Debug.Trace
 
 data Domain = Domain { dName :: Text, dActions :: [Action] } deriving Show
 data Problem = Problem { pName :: Text, pDomain :: Text, pInitState :: Facts, pGoal :: [Fact]} deriving Show
@@ -51,8 +48,7 @@ negatePred (PosPred t a) = NegPred t a
 negatePred (NegPred t a) = PosPred t a
 
 parse_pddl parser fname = do
-  let f = decode fname
-  txt <- readFile f
+  txt <- readFile fname
   let res = parseOnly lisp txt
   case res of
     Right r -> return $ parser r
