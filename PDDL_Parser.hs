@@ -14,12 +14,14 @@ import Filesystem.Path.CurrentOS
 import Debug.Trace
 
 data Domain = Domain { dName :: Text, dActions :: [Action] } deriving Show
-data Problem = Problem { pName :: Text, pDomain :: Text, pInitState :: [Predicate Var], pGoal :: [Predicate Var]} deriving Show
+data Problem = Problem { pName :: Text, pDomain :: Text, pInitState :: [Predicate Obj], pGoal :: [Predicate Obj]} deriving Show
 
 data Action = Action { aName :: Text, aPreconditions :: [Predicate Pat], aEffects :: [Predicate Pat] } deriving Show
 
 newtype Pat = Pat Text deriving Show
-newtype Var = Var Text deriving Show
+newtype Obj = Obj Text deriving Show
+
+newtype Mixed = MPat Pat | MObj Obj deriving Show
 
 data Predicate p = PosPred {predName :: Text, predArgs :: [p]} | NegPred {predName :: Text, predArgs :: [p]} deriving Show
 
@@ -40,7 +42,7 @@ sexpToDomain sexp = do
 sexpToProblem sexp = do
   name <- findTuple "problem" sexp
   domain <- findTuple ":domain" sexp
-  init <- (parse_predicate_list Var . List . L.tail) <$> findSubExp ":init" sexp
+  init <- (parse_predicate_list Obj . List . L.tail) <$> findSubExp ":init" sexp
   return $ Problem name domain init []
 
 parse_action sexp = let
