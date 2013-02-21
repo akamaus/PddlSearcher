@@ -4,9 +4,20 @@ module PDDL_Searcher where
 import ClassyPrelude
 import PDDL_Parser
 
+import Data.Graph.AStar
+
 type Env = Map Pat Obj
 
 --isApplicable :: [Predicate Obj] -> Action
+solveProblem :: Domain -> Problem -> IO (Maybe [Facts])
+solveProblem domain problem = aStarM moves cost heuro finish start
+ where moves facts = do putStrLn $ "at " ++ show facts;
+                        let facts' = concatMap (applyAction `flip` facts) (dActions domain)
+                        return $ fromList facts'
+       cost a b = return 1
+       heuro x = return 1
+       finish x = let g = fromList (pGoal problem) in do print x; return $ g == g `intersect` x
+       start = return $ pInitState problem
 
 -- применяет действие всеми возможными способами
 applyAction :: Action -> Facts -> [Facts]
@@ -23,6 +34,7 @@ applyPrecondition env (p:ps) facts = do
 
 -- применяет эффекты действия
 applyEffects :: Env -> [Pattern] -> Facts -> Facts
+applyEffects _ [] facts = facts
 applyEffects env (p:ps) facts = let new_fact = instantinatePattern env p
                                 in case new_fact of
                                   PosPred _ _ -> applyEffects env ps (insert new_fact facts)
@@ -55,6 +67,7 @@ instantinatePattern :: Env -> Pattern -> Fact
 instantinatePattern env p = p {predArgs = instantinatePatternArgs env (predArgs p)}
 
 instantinatePatternArgs :: Env -> [Pat] -> [Obj]
+instantinatePatternArgs env [] = []
 instantinatePatternArgs env (p:ps) = case lookup p env of
   Just v -> v : instantinatePatternArgs env ps
   Nothing -> error $ "can't instantinate " ++ show p

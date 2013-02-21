@@ -56,7 +56,8 @@ sexpToProblem sexp = do
   name <- findTuple "problem" sexp
   domain <- findTuple ":domain" sexp
   init <- (parse_predicate_list Obj . List . L.tail) <$> findSubExp ":init" sexp
-  return $ Problem name domain (fromList init) []
+  goal <- (parse_predicate_list Obj . (\ [x, lst] -> lst)) <$> findSubExp ":goal" sexp
+  return $ Problem name domain (fromList init) goal
 
 parse_action sexp = let
   pairs = sexpToPairs sexp
