@@ -11,6 +11,8 @@ import Data.AttoLisp
 import Data.Attoparsec as A
 import Filesystem.Path.CurrentOS
 
+import qualified Text.Show as TS
+
 import Debug.Trace
 
 data Domain = Domain { dName :: Text, dActions :: [Action] } deriving Show
@@ -23,8 +25,8 @@ type Pattern = Predicate Pat
 
 type Facts = Set Fact
 
-newtype Pat = Pat Text deriving (Show, Eq, Ord)
-newtype Obj = Obj Text deriving (Show, Eq, Ord)
+newtype Pat = Pat Text deriving (Eq, Ord)
+newtype Obj = Obj Text deriving (Eq, Ord)
 
 data Mixed = MPat Pat | MObj Obj deriving Show
 
@@ -33,7 +35,17 @@ isObj (MPat _) = False
 
 toObj (MObj x) = x
 
-data Predicate p = PosPred {predName :: Text, predArgs :: [p]} | NegPred {predName :: Text, predArgs :: [p]} deriving (Show, Eq, Ord)
+data Predicate p = PosPred {predName :: Text, predArgs :: [p]} | NegPred {predName :: Text, predArgs :: [p]} deriving (Eq, Ord)
+
+instance Show Pat where
+  show (Pat p) = "?" ++ unpack p
+
+instance Show Obj where
+  show (Obj p) = unpack p
+
+instance Show a => Show (Predicate a) where
+  show (PosPred n args) = "(" ++ unwords (unpack n : map show args) ++ ")"
+  show neg_pred = "!" ++ show (negatePred neg_pred)
 
 negatePred (PosPred t a) = NegPred t a
 negatePred (NegPred t a) = PosPred t a
@@ -82,3 +94,4 @@ sexpToPairs [] = []
 findTuple name sexp = (\ [_, Symbol x] -> x) <$> findSubExp name sexp
 
 unSymbol (Symbol s) = s
+

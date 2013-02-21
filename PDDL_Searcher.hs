@@ -11,7 +11,7 @@ type Env = Map Pat Obj
 --isApplicable :: [Predicate Obj] -> Action
 solveProblem :: Domain -> Problem -> IO (Maybe [Facts])
 solveProblem domain problem = aStarM moves cost heuro finish start
- where moves facts = do putStrLn $ "at " ++ show facts;
+ where moves facts = do --putStrLn $ "at " ++ show facts;
                         let facts' = concatMap (applyAction `flip` facts) (dActions domain)
                         return $ fromList facts'
        cost a b = return 1
@@ -43,12 +43,10 @@ applyEffects env (p:ps) facts = let new_fact = instantinatePattern env p
 -- сопоставляет шаблон предиката с фактами, на каждую удачу возвращает новый словарь переменных
 findMatches :: Env -> Pattern -> Facts -> [Env]
 findMatches env pred facts = let
-  matches = catMaybes $ map (match env (predArgs pred) . predArgs) $ toList facts
+  matches = catMaybes $ map (\f -> if predName pred == predName f then match env (predArgs pred) $ predArgs f else Nothing ) $ toList facts
  in case pred of
       PosPred _ _ -> matches
-      NegPred _ args -> case () of
-        _ | not $ all (\p -> isJust $ lookup p env) $ nub args -> error "negative predicate must be last"
-        _ -> case matches of
+      NegPred _ args -> case matches of
                [] -> [env] -- отрицательный предикат не должен ни с кем сопоставляться
                _  -> []
 
