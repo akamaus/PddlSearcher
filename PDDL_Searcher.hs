@@ -11,12 +11,11 @@ type Env = Map Pat Obj
 --isApplicable :: [Predicate Obj] -> Action
 solveProblem :: Domain -> Problem -> IO (Maybe [Facts])
 solveProblem domain problem = aStarM moves cost heuro finish start
- where moves facts = do --putStrLn $ "at " ++ show facts;
-                        let facts' = concatMap (applyAction `flip` facts) (dActions domain)
+ where moves facts = do let facts' = concatMap (applyAction `flip` facts) (dActions domain)
                         return $ fromList facts'
        cost a b = return 1
        heuro x = return 1
-       finish x = let g = fromList (pGoal problem) in do print x; return $ g == g `intersect` x
+       finish x = let g = fromList (pGoal problem) in do return $ g == g `intersect` x
        start = return $ pInitState problem
 
 -- применяет действие всеми возможными способами
